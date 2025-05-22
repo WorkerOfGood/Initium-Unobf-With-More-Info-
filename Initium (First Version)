@@ -1,0 +1,114 @@
+// ==UserScript==
+// @name         Initium
+// @version      1.0
+// @description  A cool script to help you with your Edgenuity work.
+// @author       Initium
+// @match        *://*.core.learn.edgenuity.com/*
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_xmlhttpRequest
+// @noframes
+// ==/UserScript==
+
+
+
+
+
+
+function initium (answers) {
+    let answerClicked = false;
+    let answerIDs = answers;
+    function answerQuiz() {
+        const answerChoiceLabels = document.querySelectorAll(".answer-choice-label[for]");
+        const optionsWithId = document.querySelectorAll("option[id]");
+        const checkboxesWithId = document.querySelectorAll("input[type='checkbox'][id]");
+        const iframe = document.getElementsByName("stageFrame")[0].contentDocument;
+
+        const labelsAndOptionsToClick = [];
+
+        answerChoiceLabels.forEach((label) => {
+            const labelFor = label.getAttribute("for").trim();
+            if (answerIDs.includes(labelFor)) {
+                labelsAndOptionsToClick.push(label);
+            }
+        });
+
+        optionsWithId.forEach((option) => {
+            const optionId = option.getAttribute("id").trim();
+            if (answerIDs.includes(optionId)) {
+                labelsAndOptionsToClick.push(option);
+            }
+        });
+
+        checkboxesWithId.forEach((checkbox) => {
+            const checkboxId = checkbox.getAttribute("id").trim();
+            if (answerIDs.includes(checkboxId)) {
+                labelsAndOptionsToClick.push(checkbox);
+            }
+        });
+
+        if (labelsAndOptionsToClick.length === 0 && iframe) {
+            const iframeDocument = iframe.contentDocument;
+            console.log(iframeDocument)
+            const iframeLabels = iframeDocument.querySelectorAll(".answer-choice-label[for]");
+            const iframeOptions = iframeDocument.querySelectorAll("option[id]");
+            const iframeCheckboxes = iframeDocument.querySelectorAll("input[type='checkbox'][id]");
+
+            iframeLabels.forEach((label) => {
+                const labelFor = label.getAttribute("for").trim();
+                if (answerIDs.includes(labelFor)) {
+                    labelsAndOptionsToClick.push(label);
+                }
+            });
+
+            iframeOptions.forEach((option) => {
+                const optionId = option.getAttribute("id").trim();
+                if (answerIDs.includes(optionId)) {
+                    labelsAndOptionsToClick.push(option);
+                }
+            });
+
+            iframeCheckboxes.forEach((checkbox) => {
+                const checkboxId = checkbox.getAttribute("id").trim();
+                if (answerIDs.includes(checkboxId)) {
+                    labelsAndOptionsToClick.push(checkbox);
+                }
+            });
+        }
+
+        labelsAndOptionsToClick.forEach((item) => {
+            if (item.tagName === "LABEL") {
+                item.click();
+            } else if (item.tagName === "OPTION") {
+                item.selected = true;
+            } else if (item.tagName === "INPUT" && item.type === "checkbox") {
+                item.checked = true;
+            }
+        });
+    }
+
+    const observerConfig = {
+        childList: true,
+        subtree: true
+    };
+
+    function handleMutations(mutationsList, observer) {
+
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                answerQuiz();
+            }
+        }
+    }
+
+    const observer = new MutationObserver(handleMutations);
+
+    observer.observe(document.body, observerConfig);
+
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.matches('.answer-choice-label')) {
+            answerClicked = true;
+        }
+    });
+};
